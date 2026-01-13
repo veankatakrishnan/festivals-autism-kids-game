@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap');
+
+:root {
+  /* Branding Colors - Festive & Warm */
+  --color-bg: #FFFBF0; /* Soft warm cream */
+  --color-primary: #FF9F1C; /* Vibrant Orange */
+  --color-primary-hover: #E88D0C;
+  --color-secondary: #2EC4B6; /* Calm Teal */
+  --color-accent: #FF5470; /* Playful Pink/Red */
+  --color-text: #2D3142; /* Soft Black for readability */
+  --color-text-light: #4F5D75;
+  
+  /* UI Colors */
+  --color-card-bg: #FFFFFF;
+  --color-success: #2EC4B6;
+  --color-shadow: rgba(45, 49, 66, 0.1);
+  
+  /* Spacing */
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --space-xl: 4rem;
+  
+  /* Radius */
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-bg);
+}
+
+/* Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+  text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+}
+
+.btn {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
