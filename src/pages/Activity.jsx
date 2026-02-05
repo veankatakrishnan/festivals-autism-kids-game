@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { withRouter } from '../components/withRouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { festivals } from '../data/festivals';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
@@ -33,30 +33,51 @@ const Celebration = () => (
     </motion.div>
 );
 
-const Activity = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const festival = festivals.find(f => f.id === id);
+class Activity extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            items: [],
+            placedItems: [],
+            completed: false
+        };
+    }
 
-    const [items, setItems] = useState([]);
-    const [placedItems, setPlacedItems] = useState([]);
-    const [completed, setCompleted] = useState(false);
+    componentDidMount() {
+        this.updateFestivalData();
+    }
 
-    useEffect(() => {
+    componentDidUpdate(prevProps, prevState) {
+        if (prevProps.params.id !== this.props.params.id) {
+            this.updateFestivalData();
+        }
+
+        const festival = this.getFestival();
+        if (festival &&
+            this.state.placedItems.length === festival.items.length &&
+            festival.items.length > 0 &&
+            !this.state.completed) {
+
+            // Avoid infinite loop by checking if currently false
+            if (!prevState.completed) {
+                setTimeout(() => this.setState({ completed: true }), 500);
+            }
+        }
+    }
+
+    getFestival() {
+        const { id } = this.props.params;
+        return festivals.find(f => f.id === id);
+    }
+
+    updateFestivalData() {
+        const festival = this.getFestival();
         if (festival) {
-            setItems(festival.items);
+            this.setState({ items: festival.items, placedItems: [], completed: false });
         }
-    }, [festival]);
+    }
 
-    useEffect(() => {
-        if (festival && placedItems.length === festival.items.length && festival.items.length > 0) {
-            setTimeout(() => setCompleted(true), 500);
-        }
-    }, [placedItems, festival]);
-
-    if (!festival) return <div>Festival not found</div>;
-
-    const handleDragEnd = (event, info, item) => {
+    handleDragEnd = (event, info, item) => {
         // Simple logic: if dropped roughly in the center (placing area), mark as placed.
         // In a real app we'd use collision detection with refs, but for simplicity:
         // We check if it's dragged far enough from its starting sidebar position.
@@ -76,129 +97,139 @@ const Activity = () => {
         if (isOverCanvas) {
             // Find existing placement or create new random spot in canvas
             // For simplicity, we just randomly place it in the center area if dropped.
-            if (!placedItems.find(i => i.id === item.id)) {
-                setPlacedItems([...placedItems, { ...item, x: info.point.x, y: info.point.y }]);
+            if (!this.state.placedItems.find(i => i.id === item.id)) {
+                this.setState(prevState => ({
+                    placedItems: [...prevState.placedItems, { ...item, x: info.point.x, y: info.point.y }]
+                }));
             }
         }
     };
 
-    const isPlaced = (itemId) => placedItems.some(i => i.id === itemId);
+    isPlaced = (itemId) => this.state.placedItems.some(i => i.id === itemId);
 
-    return (
-        <div style={{ height: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column' }}>
-            <AnimatePresence>
-                {completed && <Celebration />}
-            </AnimatePresence>
+    render() {
+        const festival = this.getFestival();
+        const { navigate } = this.props;
+        const { items, placedItems, completed } = this.state;
 
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-                <button onClick={() => navigate('/')} className="btn" style={{ background: 'transparent', fontSize: '1.2rem' }}>
-                    <ArrowLeft /> Back
-                </button>
-                <h1 style={{ marginLeft: '1rem', color: festival.color }}>Decorate for {festival.name}</h1>
-            </div>
+        if (!festival) return <div>Festival not found</div>;
 
-            <div style={{
-                flex: 1,
-                display: 'flex',
-                background: 'white',
-                borderRadius: 'var(--radius-lg)',
-                overflow: 'hidden',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                border: `2px solid ${festival.color}`
-            }}>
-                {/* Canvas Area */}
-                <div style={{ flex: 3, position: 'relative', background: festival.bgGradient }}>
-                    <div style={{
-                        position: 'absolute', inset: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        opacity: 0.1, fontSize: '20rem', pointerEvents: 'none'
-                    }}>
-                        {festival.items[0].icon}
-                    </div>
+        return (
+            <div style={{ height: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column' }}>
+                <AnimatePresence>
+                    {completed && <Celebration />}
+                </AnimatePresence>
 
-                    <h3 style={{ position: 'absolute', bottom: 20, left: 20, color: 'var(--color-text-light)' }}>
-                        Drag items here!
-                    </h3>
-
-                    {/* Render Placed Items */}
-                    {placedItems.map((item, index) => (
-                        <motion.div
-                            key={item.id}
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1.5, opacity: 1, x: 0, y: 0 }} // Simplified: we center them or could use drag info
-                            // To make it fun, let's just arrange them in a grid or circle in the center? 
-                            // Or better: Allow them to be dragged AROUND the canvas after placing?
-                            drag
-                            dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }} // Free drag within parent?
-                            dragElastic={0.1}
-                            style={{
-                                position: 'absolute',
-                                // Randomize initial placement slightly if we don't use drop coordinates
-                                // We'll just center them for now but allow drag
-                                top: '50%',
-                                left: '50%',
-                                fontSize: '4rem',
-                                cursor: 'grab',
-                                marginLeft: (index - placedItems.length / 2) * 60, // Spread them out
-                                marginTop: (Math.random() - 0.5) * 100
-                            }}
-                            whileHover={{ scale: 1.8 }}
-                        >
-                            {item.icon}
-                        </motion.div>
-                    ))}
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                    <button onClick={() => navigate('/')} className="btn" style={{ background: 'transparent', fontSize: '1.2rem' }}>
+                        <ArrowLeft /> Back
+                    </button>
+                    <h1 style={{ marginLeft: '1rem', color: festival.color }}>Decorate for {festival.name}</h1>
                 </div>
 
-                {/* Sidebar */}
                 <div style={{
                     flex: 1,
-                    background: '#f8f9fa',
-                    borderLeft: '1px solid #ddd',
-                    padding: '1rem',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem',
-                    alignItems: 'center'
+                    background: 'white',
+                    borderRadius: 'var(--radius-lg)',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    border: `2px solid ${festival.color}`
                 }}>
-                    <h3 style={{ marginBottom: '1rem' }}>Items</h3>
-                    {items.map((item) => (
-                        !isPlaced(item.id) && (
+                    {/* Canvas Area */}
+                    <div style={{ flex: 3, position: 'relative', background: festival.bgGradient }}>
+                        <div style={{
+                            position: 'absolute', inset: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            opacity: 0.1, fontSize: '20rem', pointerEvents: 'none'
+                        }}>
+                            {festival.items[0].icon}
+                        </div>
+
+                        <h3 style={{ position: 'absolute', bottom: 20, left: 20, color: 'var(--color-text-light)' }}>
+                            Drag items here!
+                        </h3>
+
+                        {/* Render Placed Items */}
+                        {placedItems.map((item, index) => (
                             <motion.div
                                 key={item.id}
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1.5, opacity: 1, x: 0, y: 0 }} // Simplified: we center them or could use drag info
+                                // To make it fun, let's just arrange them in a grid or circle in the center? 
+                                // Or better: Allow them to be dragged AROUND the canvas after placing?
                                 drag
-                                dragSnapToOrigin={true} // Snap back if not dropped successfully (we handle success by removing from this list)
-                                onDragEnd={(e, info) => handleDragEnd(e, info, item)}
-                                whileHover={{ scale: 1.1 }}
-                                whileDrag={{ scale: 1.2, zIndex: 100 }}
+                                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }} // Free drag within parent?
+                                dragElastic={0.1}
                                 style={{
-                                    fontSize: '3rem',
+                                    position: 'absolute',
+                                    // Randomize initial placement slightly if we don't use drop coordinates
+                                    // We'll just center them for now but allow drag
+                                    top: '50%',
+                                    left: '50%',
+                                    fontSize: '4rem',
                                     cursor: 'grab',
-                                    background: 'white',
-                                    padding: '1rem',
-                                    borderRadius: '50%',
-                                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                                    width: '80px', height: '80px',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    marginLeft: (index - placedItems.length / 2) * 60, // Spread them out
+                                    marginTop: (Math.random() - 0.5) * 100
                                 }}
+                                whileHover={{ scale: 1.8 }}
                             >
                                 {item.icon}
                             </motion.div>
-                        )
-                    ))}
+                        ))}
+                    </div>
 
-                    {placedItems.length === items.length && (
-                        <motion.div
-                            initial={{ scale: 0 }} animate={{ scale: 1 }}
-                            style={{ marginTop: 'auto', textAlign: 'center' }}
-                        >
-                            <CheckCircle size={48} color="var(--color-success)" />
-                            <p>All done!</p>
-                        </motion.div>
-                    )}
+                    {/* Sidebar */}
+                    <div style={{
+                        flex: 1,
+                        background: '#f8f9fa',
+                        borderLeft: '1px solid #ddd',
+                        padding: '1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '1rem',
+                        alignItems: 'center'
+                    }}>
+                        <h3 style={{ marginBottom: '1rem' }}>Items</h3>
+                        {items.map((item) => (
+                            !this.isPlaced(item.id) && (
+                                <motion.div
+                                    key={item.id}
+                                    drag
+                                    dragSnapToOrigin={true} // Snap back if not dropped successfully (we handle success by removing from this list)
+                                    onDragEnd={(e, info) => this.handleDragEnd(e, info, item)}
+                                    whileHover={{ scale: 1.1 }}
+                                    whileDrag={{ scale: 1.2, zIndex: 100 }}
+                                    style={{
+                                        fontSize: '3rem',
+                                        cursor: 'grab',
+                                        background: 'white',
+                                        padding: '1rem',
+                                        borderRadius: '50%',
+                                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+                                        width: '80px', height: '80px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}
+                                >
+                                    {item.icon}
+                                </motion.div>
+                            )
+                        ))}
+
+                        {placedItems.length === items.length && (
+                            <motion.div
+                                initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                style={{ marginTop: 'auto', textAlign: 'center' }}
+                            >
+                                <CheckCircle size={48} color="var(--color-success)" />
+                                <p>All done!</p>
+                            </motion.div>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-};
+        );
+    }
+}
 
-export default Activity;
+export default withRouter(Activity);
