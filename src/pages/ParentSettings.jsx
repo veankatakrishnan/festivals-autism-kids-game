@@ -2,7 +2,8 @@ import React, { useState, useContext, useRef, useEffect } from 'react';
 import { SettingsContext } from '../context/SettingsContext';
 import Modal from '../components/Modal';
 import { motion } from 'framer-motion';
-import { Lock, Save, Settings } from 'lucide-react';
+import { Lock, Save, Settings, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 /*
  * This component demonstrates:
@@ -84,6 +85,13 @@ const ParentSettings = () => {
             </Modal>
 
             <header style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                <Link to="/" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '40px', height: '40px', borderRadius: '50%', background: '#eee',
+                    color: 'var(--color-text)', textDecoration: 'none'
+                }}>
+                    <ArrowLeft size={24} />
+                </Link>
                 <div style={{ padding: '1rem', background: '#eee', borderRadius: '50%' }}>
                     <Settings size={32} />
                 </div>
@@ -117,6 +125,27 @@ const ParentSettings = () => {
                             value={formData.childName}
                             onChange={handleChange}
                             style={{ width: '100%', padding: '0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid #ccc' }}
+                        />
+                    </div>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Child's Age</label>
+                        <input
+                            type="number"
+                            name="childAge"
+                            value={formData.childAge || ''}
+                            onChange={handleChange}
+                            style={{ width: '100%', padding: '0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid #ccc' }}
+                        />
+                    </div>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Interests / Favorites</label>
+                        <textarea
+                            name="interests"
+                            value={formData.interests || ''}
+                            onChange={handleChange}
+                            rows="3"
+                            placeholder="e.g. Trains, Dinosaurs, Blue color..."
+                            style={{ width: '100%', padding: '0.8rem', borderRadius: 'var(--radius-md)', border: '1px solid #ccc', fontFamily: 'inherit' }}
                         />
                     </div>
                 </section>

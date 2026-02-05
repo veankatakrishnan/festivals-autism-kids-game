@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link } from 'react-router-dom';
 
 const Layout = () => {
     return (
@@ -15,9 +15,9 @@ const Layout = () => {
                 color: 'var(--color-text-light)',
                 borderTop: '1px solid #eee'
             }}>
-                <a href="/settings" style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 'bold' }}>
+                <Link to="/settings" style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 'bold' }}>
                     Parent Settings
-                </a>
+                </Link>
             </footer>
         </div>
     );

@@ -9,6 +9,8 @@ export const SettingsProvider = ({ children }) => {
         const saved = localStorage.getItem('autism-game-settings');
         return saved ? JSON.parse(saved) : {
             childName: 'Buddy',
+            childAge: '',
+            interests: '',
             themeColor: '#FF6B6B', // Default primary color
             soundEnabled: true,
             visuals: 'simple' // simple, vibrant
